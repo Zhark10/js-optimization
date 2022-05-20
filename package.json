@@ -1,0 +1,23 @@
+{
+  "name": "js-optimization",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Zhark10/js-optimization.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Zhark10/js-optimization/issues"
+  },
+  "homepage": "https://github.com/Zhark10/js-optimization#readme",
+  "dependencies": {
+    "node-fetch": "^3.2.4"
+  }
+}

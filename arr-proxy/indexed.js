@@ -1,49 +1,62 @@
+import fetch from "node-fetch";
+
 const OptimizedArray = new Proxy(Array, {
   construct(target, [array]) {
-    const arrayFields = Object.keys(array[0])
     const arrayToSearchByUID = {}
     const cachedArray = {}
-    arrayFields.forEach(fieldName => cachedArray[fieldName] = {})
+    const arrayFields = Object.keys(array[0])
 
-    const updArrays = item => {
-         arrayFields.forEach(fieldName => {
-            const generatedUID = `UID-${Object.values(item).join("")}`
-            cachedArray[fieldName][item[fieldName]] = generatedUID
-            arrayToSearchByUID[generatedUID] = item
-        })
+    const updateArrays = item => {
+      arrayFields.forEach(fieldName => {
+        const fieldsCountToUIDGeneration = 3
+        const generatedUID = `UID-${Object.values(item).slice(0, fieldsCountToUIDGeneration).join("__")}`
+        cachedArray[fieldName][item[fieldName]] = generatedUID
+        arrayToSearchByUID[generatedUID] = item
+      })
     }
-      
-    array.forEach(updArrays)
-    
+
+    arrayFields.forEach(fieldName => cachedArray[fieldName] = {})
+    array.forEach(updateArrays)
+
     return new Proxy(new target(...array), {
-        get(targetArray, prop) {
-            const proxyMethods = {
-                "push": item => {
-                    updArrays(item)
-                    targetArray[prop].call(targetArray. prop)
-                },
-                "findByField": (fieldName, searchValue) => {
-                    const foundUID = cachedArray[fieldName][searchValue]
-                    console.log('foundUID', foundUID)
-                    return arrayToSearchByUID[foundUID]
-                },
+      get(targetArray, prop) {
+        const proxyMethods = {
+          "push": item => {
+            updateArrays(item)
+            targetArray[prop].call(targetArray.prop)
+          },
+          "findByField": (fieldName, searchValue) => {
+            if (cachedArray.hasOwnProperty(fieldName)) {
+              const foundUID = cachedArray[fieldName][searchValue]
+              return arrayToSearchByUID[foundUID]
             }
-            return proxyMethods[prop] || targetArray
+            return null
+          },
         }
+        return proxyMethods[prop] || targetArray
+      }
     })
   }
 })
 
-const users = [
-  {id: 163, name: "Max", age: 25},
-  {id: 142, name: "Dasha", age: 32},
-  {id: 146, name: "Dmitry", age: 31},
-  {id: 153, name: "Arkady", age: 27},
-]
+const test = async () => {
+  // e.g.
+  async function getGitHubUsers() {
+    const response = await fetch("https://api.github.com/users")
+    const data = await response.json()
+    return data
+  }
+  const users = await getGitHubUsers()
+  const indexedUsers = new OptimizedArray(users)
 
-const indexedUsers = new OptimizedArray(users)
+  const TEST_USER_ID = 5
+  const TEST_FIELD_ID = 1
+  const TEST_USER = {
+    FIELD: Object.keys(users[TEST_USER_ID])[TEST_FIELD_ID],
+    SERACH_VALUE: Object.values(users[TEST_USER_ID])[TEST_FIELD_ID],
+  }
+  const testResult = indexedUsers.findByField(TEST_USER.FIELD, TEST_USER.SERACH_VALUE)
+  console.log(testResult)
+}
 
-console.log(indexedUsers.findByField("name", "Dasha"))
-console.log(indexedUsers.findByField("id", "142"))
-console.log(indexedUsers.findByField("name", "Dmitry"))
-console.log(indexedUsers.findByField("age", "32"))
+test()
