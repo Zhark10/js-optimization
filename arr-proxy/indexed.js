@@ -2,20 +2,20 @@ import fetch from "node-fetch";
 
 const OptimizedArray = new Proxy(Array, {
   construct(target, [array]) {
-    const arrayToSearchByUID = {}
-    const cachedArray = {}
+    const cachedDataToSearchByUID = {}
+    const cachedSearchLinks = {}
     const arrayFields = Object.keys(array[0])
 
     const updateArrays = item => {
       arrayFields.forEach(fieldName => {
         const fieldsCountToUIDGeneration = 3
         const generatedUID = `UID-${Object.values(item).slice(0, fieldsCountToUIDGeneration).join("__")}`
-        cachedArray[fieldName][item[fieldName]] = generatedUID
-        arrayToSearchByUID[generatedUID] = item
+        cachedSearchLinks[fieldName][item[fieldName]] = generatedUID
+        cachedDataToSearchByUID[generatedUID] = item
       })
     }
 
-    arrayFields.forEach(fieldName => cachedArray[fieldName] = {})
+    arrayFields.forEach(fieldName => cachedSearchLinks[fieldName] = {})
     array.forEach(updateArrays)
 
     return new Proxy(new target(...array), {
@@ -26,9 +26,9 @@ const OptimizedArray = new Proxy(Array, {
             targetArray[prop].call(targetArray.prop)
           },
           "findByField": (fieldName, searchValue) => {
-            if (cachedArray.hasOwnProperty(fieldName)) {
-              const foundUID = cachedArray[fieldName][searchValue]
-              return arrayToSearchByUID[foundUID]
+            if (cachedSearchLinks.hasOwnProperty(fieldName)) {
+              const foundUID = cachedSearchLinks[fieldName][searchValue]
+              return cachedDataToSearchByUID[foundUID]
             }
             return null
           },
