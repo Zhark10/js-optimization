@@ -23,8 +23,8 @@ const trampolineFactorial = trampoline(factorial_1)
 const trampolineSum = trampoline(sum_1)
 
 const results_1 = {
-    'optimazed tail-call factorial': trampolineFactorial(100),
-    'optimazed tail-call sum': trampolineSum(999999),
+    'optimized tail-call factorial': trampolineFactorial(100),
+    'optimized tail-call sum': trampolineSum(999999),
 }
 
 var style_1 = ['padding: 1rem;',
