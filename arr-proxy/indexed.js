@@ -2,38 +2,36 @@ import fetch from "node-fetch";
 
 const OptimizedArray = new Proxy(Array, {
   construct(target, [array]) {
-    const cachedDataToSearchByUID = {}
-    const cachedSearchLinks = {}
+    const cached = { dataToSearchByUID: {}, searchLinks: {} }
     const arrayFields = Object.keys(array[0])
 
     const updateArrays = item => {
       arrayFields.forEach(fieldName => {
         const fieldsCountToUIDGeneration = 3
         const generatedUID = `UID-${Object.values(item).slice(0, fieldsCountToUIDGeneration).join("__")}`
-        cachedSearchLinks[fieldName][item[fieldName]] = generatedUID
-        cachedDataToSearchByUID[generatedUID] = item
+        cached.searchLinks[fieldName][item[fieldName]] = generatedUID
+        cached.dataToSearchByUID[generatedUID] = item
       })
     }
 
-    arrayFields.forEach(fieldName => cachedSearchLinks[fieldName] = {})
+    arrayFields.forEach(fieldName => cached.searchLinks[fieldName] = {})
     array.forEach(updateArrays)
 
     return new Proxy(new target(...array), {
       get(targetArray, prop) {
-        const proxyMethods = {
-          "push": item => {
-            updateArrays(item)
-            targetArray[prop].call(targetArray.prop)
-          },
-          "findByField": (fieldName, searchValue) => {
-            if (cachedSearchLinks.hasOwnProperty(fieldName)) {
-              const foundUID = cachedSearchLinks[fieldName][searchValue]
-              return cachedDataToSearchByUID[foundUID]
-            }
-            return null
-          },
+        const push = item => {
+          updateArrays(item)
+          targetArray[prop].call(targetArray.prop)
         }
-        return proxyMethods[prop] || targetArray
+        const findByField = (fieldName, searchValue) => {
+          if (cached.searchLinks.hasOwnProperty(fieldName)) {
+            const foundUID = cached.searchLinks[fieldName][searchValue]
+            return cached.dataToSearchByUID[foundUID]
+          }
+          return null
+        }
+        const proxyMethods = { push, findByField }
+        return proxyMethods[prop] ?? targetArray
       }
     })
   }
